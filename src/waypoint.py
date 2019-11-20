@@ -5,4 +5,11 @@ class Waypoint:
         self.altitude = altitude
 
     def __str__(self):
-        return ('Latitude: ' + str(self.latitude)  + ', Longitude: ' + str(self.longitude) + ', Altitude: ' + str(self.altitude))
+        return (
+            "Latitude: "
+            + str(self.latitude)
+            + ", Longitude: "
+            + str(self.longitude)
+            + ", Altitude: "
+            + str(self.altitude)
+        )
