@@ -11,21 +11,11 @@ def import_file(file):
     return interop_data
 
 
-def handle_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", help="Path of interop file", required=True)
-    parsed_args = parser.parse_args(sys.argv[1:])
-    return open(parsed_args.file)
-
-
 def get_waypoints(interop_data):
-    way = []
-    for i in range(len(interop_data["waypoints"])):
-        lat = interop_data["waypoints"][i]["latitude"]
-        lon = interop_data["waypoints"][i]["longitude"]
-        alt = interop_data["waypoints"][i]["altitude"]
-        way.append(Waypoint(lat, lon, alt))
-    return way
+    return [
+        Waypoint(w["latitude"], w["longitude"], w["altitude"])
+        for w in interop_data["waypoints"]
+    ]
 
 
 def add_waypoints(way):
@@ -45,7 +35,11 @@ def send_waypoints():
 
 
 if __name__ == "__main__":
-    file = handle_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", help="Path of interop file", required=True)
+    parsed_args = parser.parse_args()
+    file = parsed_args.file
+
     interop_data = import_file(file)
     way = get_waypoints(interop_data)
     add_waypoints(way)
