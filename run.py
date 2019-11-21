@@ -29,7 +29,7 @@ def send_waypoints():
     master.waypoint_clear_all_send()
     master.waypoint_count_send(manager.count())
 
-    for i in range(manager.count()):
+    for _ in range(manager.count()):
         msg = master.recv_match(type=["MISSION_REQUEST"], blocking=True)
         master.mav.send(manager.wp(msg.seq))
 
