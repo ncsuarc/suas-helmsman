@@ -33,7 +33,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--file", help="Path of interop file", required=True)
     parsed_args = parser.parse_args()
-    file = open(parsed_args.file)
     with open(parsed_args.file, "r") as json_file:
         interop_data = json.load(json_file)
 
