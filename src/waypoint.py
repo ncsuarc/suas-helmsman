@@ -1,15 +1,9 @@
-class Waypoint:
-    def __init__(self, latitude, longitude, altitude):
-        self.latitude = latitude
-        self.longitude = longitude
-        self.altitude = altitude
+from collections import namedtuple
 
-    def __str__(self):
-        return (
-            "Latitude: "
-            + str(self.latitude)
-            + ", Longitude: "
-            + str(self.longitude)
-            + ", Altitude: "
-            + str(self.altitude)
-        )
+
+class Waypoint(
+    namedtuple("Waypoint", ["latitude", "longitude", "altitude"])
+):
+    """
+    This is a class to manage the course waypoints of the interop file.
+    """
