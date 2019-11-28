@@ -5,12 +5,6 @@ from src.waypoint import Waypoint
 
 manager = mavwp.MAVWPLoader()
 
-
-def import_file(file):
-    interop_data = json.load(file)
-    return interop_data
-
-
 def get_waypoints(interop_data):
     return [
         Waypoint(w["latitude"], w["longitude"], w["altitude"])
@@ -40,7 +34,7 @@ if __name__ == "__main__":
     parsed_args = parser.parse_args()
     file = parsed_args.file
 
-    interop_data = import_file(file)
+    interop_data = json.load(file)
     way = get_waypoints(interop_data)
     add_waypoints(way)
     send_waypoints()
