@@ -1,0 +1,4 @@
+networkx==2.4
+pymavlink==2.4.0
+Shapely==1.7.0
+PyGeodesy==20.2.12
