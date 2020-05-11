@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # Construct Graph
     time1 = time.process_time()
     graph = construct_graph(
-        interop_data, parsed_args.drop, parsed_args.off, parsed_args.obsacles
+        interop_data, parsed_args.drop, parsed_args.off, parsed_args.obstacles
     )
     time2 = time.process_time()
     print("Graph: ", (time2 - time1))
