@@ -175,14 +175,13 @@ class SUASGraph:
 
     def construct_path(self):
         """Constructs the flight path using the A* Algorithm.
-
         This is done in this order:
         1. Construct path of just waypoints
         2. Check to see if it is possible to do offaxis and drop while flying path
         3. If not generate most optimal after
         """
-        off_check = False
-        drop_check = False
+        off_check = self.off_axis == None
+        drop_check = self.drop == None
         path = []
         # Generate waypoints
         for i in range(len(self.waypoints) - 1):
@@ -208,14 +207,12 @@ class SUASGraph:
             if off_point.z / off_dis > 2.74:
                 off_check = True
                 self.off_axis_optimal = off_point
-            off_check = True
         if self.drop != None:
             drop_point = ring.interpolate(ring.project(self.drop))
             drop_dis = drop_point.distance(self.drop)
             if drop_dis < 15:
                 drop_check = True
                 self.drop = drop_point
-            drop_check = True
         seg = []
         # Generate remaining POIs
         if not off_check and not drop_check:
