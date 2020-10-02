@@ -3,13 +3,21 @@ import json
 import sys
 import time
 
-
-
 from autogen import suas_graph
 
 
+def Upload_json(graph,json_file):
+    json_file["autogenPoints"] = []
 
+    for lat,lon,alt in graph.path_lat_lon_alt():
+        json_file["autogenPoints"].append({
+            "latitude": lat,
+            "longitude": lon,
+            "altitude": alt
+        })
 
+    with open("./autogen_output.json","w") as output:
+        output.write(json.dumps(json_file, indent=2)) 
 
 def construct_graph(interop_data, drop, off_axis, obstacles):
     """Constructs an Instance of SUASGraph.
@@ -88,7 +96,7 @@ if __name__ == "__main__":
     # Open Interop File
     with open(parsed_args.file, "r") as json_file:
         interop_data = json.load(json_file)
-
+    
     # Construct Graph
     time1 = time.process_time()
     graph = construct_graph(
@@ -98,4 +106,6 @@ if __name__ == "__main__":
     print("Graph: ", (time2 - time1))
     print(graph.path)
     # Upload Flight Path
-    
+
+    Upload_json(graph,interop_data)
+        
