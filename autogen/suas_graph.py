@@ -1,10 +1,10 @@
 import itertools
-from math import asin, cos, pi, radians, sin, sqrt, tan
+from math import pi, sqrt, tan
 from typing import List, Optional, Tuple
-
+import matplotlib.pyplot as plt
 import networkx as nx
 from pygeodesy.ecef import EcefCartesian
-from shapely.geometry import LinearRing, LineString, Point
+from shapely.geometry import LinearRing, LineString, Point, Polygon
 
 from autogen.data import Obstacle, Waypoint
 
@@ -13,16 +13,16 @@ class SUASGraph:
     """An SUASGraph is an object conatining all the nessecary data to generate a flight path for SUAS.
 
     This is done by constructing a networkx graph, adding all points of interest, then creating an edge graph.
-    All actual graph construction is deligated to the functions. 
+    All actual graph construction is deligated to the functions.
     This graph is generated in cartesian coordinates with (0, 0) being the lost coms point with all distances being feet.
     """
 
-    def __init__(self, starting_point, alt_bounds):
+    def __init__(self, starting_point, alt_bounds) -> None:
         """Constructs a SUASGraph.
 
         Args:
             starting_point (Dictionary): A starting point within the bounds
-            alt_bounds (Dictionary): the altitude bounds 
+            alt_bounds (Dictionary): the altitude bounds
         """
         self.starting_point = starting_point
         # Cartesian Coordiates System centered at lost coms point
@@ -31,18 +31,20 @@ class SUASGraph:
         )
         # Construct Graph and add initial point
         self.graph = nx.empty_graph(0)
-        self.graph.add_node((0, 0, 200))
+        # self.graph.add_node((0, 0, 200))
         # POIs
         self.alt_bounds = alt_bounds
         self.waypoints: List[Waypoint] = []
         self.obstacles: List[Obstacle] = []
         self.boundaries: List[Point] = []
+        self.boundary_ring: LinearRing = None
+        self.boundary_poly: Polygon = None
         self.drop: Optional[Point] = None
         self.off_axis: Optional[Point] = None
         self.off_axis_optimal: Optional[Point] = None
         self.path: List[Tuple] = []
 
-    def add_boundaries(self, bounds):
+    def add_boundaries(self, bounds) -> None:
         """Adds the flight boundary points to the graph.
 
         Args:
@@ -59,12 +61,10 @@ class SUASGraph:
 
             # Add to list
             self.boundaries.append(Point(x, y))
+        self.boundary_ring = LinearRing(self.boundaries)
+        self.boundary_poly = Polygon(self.boundaries)
 
-            # Add to graph at every height
-            for i in range(self.alt_bounds[0], self.alt_bounds[1], 60):
-                self.graph.add_node((x, y, i))
-
-    def add_waypoints(self, way):
+    def add_waypoints(self, way) -> None:
         """Adds the waypoints to the graph.
 
         Args:
@@ -79,7 +79,7 @@ class SUASGraph:
             self.waypoints.append(Waypoint(Point(x, y, w["altitude"]), i))
             self.graph.add_node((x, y, w["altitude"]))
 
-    def add_obstacles(self, obs):
+    def add_obstacles(self, obs) -> None:
         """Adds obstacles to graph.
 
         Args:
@@ -93,9 +93,12 @@ class SUASGraph:
             # Add each point to the list and the graph
             obi = Obstacle(Point(x, y, self.alt_bounds[0]), o["radius"], o["height"])
             self.obstacles.append(obi)
-            self.graph.add_nodes_from(obi.points())
+            for n in obi.points():
+                p = Point(*n)
+                if self.boundary_poly.contains(p):
+                    self.graph.add_node(n)
 
-    def add_off_axis(self, off):
+    def add_off_axis(self, off) -> None:
         """Adds the off axis point to the graph and generates an optimal point
 
         Args:
@@ -106,10 +109,8 @@ class SUASGraph:
         x, y, *_ = self.cartesian.forward(off["latitude"], off["longitude"])
         point = Point(x, y, 0)
 
-        # Construct a ring of the boundaries
-        ring = LinearRing(self.boundaries)
         # Find the optimal off axis point by interpolating the point onto the ring
-        off_point = ring.interpolate(ring.project(point))
+        off_point = self.boundary_ring.interpolate(self.boundary_ring.project(point))
         # Calculate the height of the point
         dis = off_point.distance(point)
         z = min(dis * tan(75 * pi / 180), 325)
@@ -121,7 +122,7 @@ class SUASGraph:
         # Add actual off axis point
         self.off_axis = point
 
-    def add_drop(self, drop):
+    def add_drop(self, drop) -> None:
         """Adds the optimal drop point to the graph
 
         Args:
@@ -131,15 +132,16 @@ class SUASGraph:
         # Forward converts from latlon to cartesian
         x, y, *_ = self.cartesian.forward(drop["latitude"], drop["longitude"])
         # Add point to graph
-        self.drop = Point(x, y, 125)
+        self.drop = Point(x, y, 500)
         self.graph.add_node((self.drop.x, self.drop.y, self.drop.z))
 
-    def add_edges(self):
+    def add_edges(self) -> None:
         """Constructs all possible fly paths for the plane.
 
         This checks every combination of points to see if they are valid to fly.
         A path is valid if it does not pass through an obstacle and has less than a 15% incline
         """
+        print(self.graph.number_of_nodes())
         counter = 0
         for node, other in itertools.product(self.graph, self.graph):
             # Check to see if graph already has edge
@@ -156,24 +158,27 @@ class SUASGraph:
                 if other[1] - node[1] != 0
                 else 2
             )
-            if slopexz >= 0.36 and slopeyz >= 0.36:
+            if slopexz >= 0.9 and slopeyz >= 0.9:
                 continue
             # Add edges to graph
+            seg = LineString([node, other])
             if len(self.obstacles) == 0:
                 # If there are no edges then all edges
-                seg = LineString([node, other])
                 self.graph.add_edge(node, other, weight=seg.length)
             # Compare each potential path to obstacles to see if valid
+            inter = not self.boundary_ring.intersection(seg).is_empty
             for o in self.obstacles:
-                seg = LineString([node, other])
-                if not solve_intersection(o, seg):
-                    self.graph.add_edge(node, other, weight=seg.length)
+                if inter or solve_intersection(o, seg):
+                    inter = True
+                    break
+            if not inter:
+                self.graph.add_edge(node, other, weight=seg.length)
             counter += 1  #
             if counter % 10000 == 0:
                 print(counter)
         print(len(self.graph.edges()))
 
-    def construct_path(self):
+    def construct_path(self) -> None:
         """Constructs the flight path using the A* Algorithm.
         This is done in this order:
         1. Construct path of just waypoints
@@ -194,6 +199,7 @@ class SUASGraph:
                     heuristic
                 )
             )
+            print(i, seg, self.graph.has_edge(seg[0], seg[len(seg) - 1]))
 
             if i == 0:
                 path.extend(seg)
@@ -274,7 +280,7 @@ class SUASGraph:
         path.extend(seg)
         self.path = path
 
-    def path_lat_lon_alt(self):
+    def path_lat_lon_alt(self) -> List[Tuple[float, float, float]]:
         """Returns the path in lat long alt coordinates
 
         Returns:
@@ -287,16 +293,20 @@ class SUASGraph:
             temp.append((lat, lon, z))
         return temp
 
+    def show(self) -> None:
+        nx.draw_networkx(self.graph, with_labels=False, node_size=100)
+        plt.show()
 
-def heuristic(node, end_node):
+
+def heuristic(node, end_node) -> float:
     """Heuristic Function used in Networkx as H score
 
     Measures the distance from the end point
-    
+
     Args:
         node (Tuple): Initial Point
         end_node (Tuple): Final Point
-    
+
     Returns:
         float: H score
     """
@@ -321,13 +331,13 @@ def heuristic(node, end_node):
     )
 
 
-def solve_intersection(o, seg):
+def solve_intersection(o: Obstacle, seg: LineString) -> bool:
     """Solves the intersection between an obstacle and a LineString
-    
+
     Args:
         o (Obstacle): The Obstacle to compare against
         seg (LineString): The potential flight path to compare against
-    
+
     Returns:
         Bool: False if no intersection, True otherwise
     """

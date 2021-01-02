@@ -1,5 +1,6 @@
 from math import cos, pi, sin
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
+from typing import List
 
 from shapely.geometry import LineString, Point
 
@@ -8,11 +9,11 @@ class Waypoint(NamedTuple):
     """Data for a Waypoint Object.
 
     A Waypoint is a point in which we need to travel to at the start of the mission
-    
+
     Args:
         point (Point): The point to travel to given as x, y, z
         order (int): the order number in which to travel to
-    
+
     Example:
         Waypoint(Point(x, y, z), 0)
     """
@@ -25,7 +26,7 @@ class Obstacle(NamedTuple):
     """Class for an obstacle object.
 
     An obstacle is define by a point given in x y, a height, and a radius
-    
+
     Args:
         point (Point): the center of the circle
         radius (float): the radius of the circle
@@ -36,9 +37,9 @@ class Obstacle(NamedTuple):
     radius: float
     height: int
 
-    def equation(self):
+    def equation(self) -> LineString:
         """Returns the equation of the obstacle cylinder.
-        
+
         This is used to check for intersections during edge generation
 
         Returns:
@@ -50,16 +51,16 @@ class Obstacle(NamedTuple):
             .boundary
         )
 
-    def points(self):
+    def points(self) -> List[Tuple[float, float, int]]:
         """Estimates the cylinder to an octogon.
-        
+
         Used to add possible flypoints to the graph
 
         Returns:
             List[Tuple]: A List of point Tuples in (x, y, z) format
         """
         points = []
-        divider = 8
+        divider = 6
         for i in range(int(self.point.z), int(self.height), 60):
             for j in range(divider):
                 x = (feet_to_meters(self.radius) + 5) * cos(
@@ -72,5 +73,5 @@ class Obstacle(NamedTuple):
         return points
 
 
-def feet_to_meters(feet):
+def feet_to_meters(feet) -> float:
     return feet * 0.3048

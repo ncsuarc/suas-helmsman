@@ -1,36 +1,34 @@
 import argparse
 import json
-import sys
 import time
 
 from autogen import suas_graph
 
 
-def Upload_json(graph,json_file):
+def upload_json(graph, json_file):
     json_file["autogenPoints"] = []
 
-    for lat,lon,alt in graph.path_lat_lon_alt():
-        json_file["autogenPoints"].append({
-            "latitude": lat,
-            "longitude": lon,
-            "altitude": alt
-        })
+    for lat, lon, alt in graph.path_lat_lon_alt():
+        json_file["autogenPoints"].append(
+            {"latitude": lat, "longitude": lon, "altitude": alt}
+        )
 
-    with open("./autogen_output.json","w") as output:
-        output.write(json.dumps(json_file, indent=2)) 
+    with open("./autogen_output.json", "w") as output:
+        output.write(json.dumps(json_file, indent=2))
+
 
 def construct_graph(interop_data, drop, off_axis, obstacles):
     """Constructs an Instance of SUASGraph.
 
-    This generates a SUASGraph from the interop data provided. 
-    This generates all the points of interest and possible paths 
+    This generates a SUASGraph from the interop data provided.
+    This generates all the points of interest and possible paths
     while accounting for obstacles.
-    
+
     Args:
         interop_data (Dictionary): JSON file of the interop data
-        parsed_args (argparse.ArgumentParser): The argument parser, 
+        parsed_args (argparse.ArgumentParser): The argument parser,
         used to determine whether of not to generate features.
-    
+
     Returns:
         SUASGraph: The constructed graph
     """
@@ -42,18 +40,23 @@ def construct_graph(interop_data, drop, off_axis, obstacles):
             int(interop_data["flyZones"][0]["altitudeMax"]),
         ),
     )
+    print("Adding Boundaries to Graph")
     # Adds waypoint boundaries to map
     g.add_boundaries(interop_data["flyZones"][0]["boundaryPoints"])
     # Adds waypoint to map
+    print("Adding Waypoints to Graph")
     g.add_waypoints(interop_data["waypoints"])
     # Adds obstacles to map
     if obstacles:
+        print("Adding Obstacles to Graph")
         g.add_obstacles(interop_data["stationaryObstacles"])
     # Adds drop point to map
     if drop:
+        print("Adding Drop to Graph")
         g.add_drop(interop_data["airDropPos"])
     # Adds off-axis point to map
     if off_axis:
+        print("Adding Off Axis to Graph")
         g.add_off_axis(interop_data["offAxisOdlcPos"])
     # Constructs possible flight paths
     g.add_edges()
@@ -83,20 +86,28 @@ if __name__ == "__main__":
         default="localhost:14550",
     )
     parser.add_argument(
-        "-d", "--drop", help="Toggle to generate drop point", default=True,
+        "-d",
+        "--drop",
+        help="Toggle to generate drop point",
+        action="store_false",
     )
     parser.add_argument(
-        "-o", "--off", help="Toggle to generate off axis point", default=True,
+        "-o",
+        "--off",
+        help="Toggle to generate off axis point",
+        action="store_false",
     )
     parser.add_argument(
-        "--obstacles", help="Toggle for generating obstacles", default=True,
+        "--obstacles",
+        help="Toggle for generating obstacles",
+        action="store_false",
     )
     parsed_args = parser.parse_args()
 
     # Open Interop File
     with open(parsed_args.file, "r") as json_file:
         interop_data = json.load(json_file)
-    
+
     # Construct Graph
     time1 = time.process_time()
     graph = construct_graph(
@@ -104,8 +115,7 @@ if __name__ == "__main__":
     )
     time2 = time.process_time()
     print("Graph: ", (time2 - time1))
-    print(graph.path)
+    # print(graph.path)
     # Upload Flight Path
 
-    Upload_json(graph,interop_data)
-        
+    upload_json(graph, interop_data)
