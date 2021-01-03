@@ -341,5 +341,5 @@ def solve_intersection(o: Obstacle, seg: LineString) -> bool:
     Returns:
         Bool: False if no intersection, True otherwise
     """
-    inters = o.equation().intersection(seg)
+    inters = o.shapely.intersection(seg)
     return not inters.is_empty

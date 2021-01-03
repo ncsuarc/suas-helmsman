@@ -22,7 +22,7 @@ class Waypoint(NamedTuple):
     order: int
 
 
-class Obstacle(NamedTuple):
+class Obstacle(object):
     """Class for an obstacle object.
 
     An obstacle is define by a point given in x y, a height, and a radius
@@ -32,12 +32,13 @@ class Obstacle(NamedTuple):
         radius (float): the radius of the circle
         height (int): the height of the obstacle
     """
+    def __init__(self, center: Point, radius: float, height: int) -> None:
+        self.center = center
+        self.radius = radius
+        self.height = height
+        self.shapely = self._equation()
 
-    point: Point
-    radius: float
-    height: int
-
-    def equation(self) -> LineString:
+    def _equation(self):
         """Returns the equation of the obstacle cylinder.
 
         This is used to check for intersections during edge generation
@@ -46,7 +47,7 @@ class Obstacle(NamedTuple):
             LineString: A LineString in through the center with a radius buffer
         """
         return (
-            LineString([self.point, (self.point.x, self.point.y, self.height)])
+            LineString([self.center, (self.center.x, self.center.y, self.height)])
             .buffer(feet_to_meters(self.radius))
             .boundary
         )
@@ -60,15 +61,15 @@ class Obstacle(NamedTuple):
             List[Tuple]: A List of point Tuples in (x, y, z) format
         """
         points = []
-        divider = 6
-        for i in range(int(self.point.z), int(self.height), 60):
+        divider = 8
+        for i in range(int(self.center.z), int(self.height), 60):
             for j in range(divider):
                 x = (feet_to_meters(self.radius) + 5) * cos(
                     pi / divider * j * 2
-                ) + self.point.x
+                ) + self.center.x
                 y = (feet_to_meters(self.radius) + 5) * sin(
                     pi / divider * j * 2
-                ) + self.point.y
+                ) + self.center.y
                 points.append((x, y, i))
         return points
 
