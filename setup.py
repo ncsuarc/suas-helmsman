@@ -13,14 +13,11 @@ setup(
     url="https://github.com/ncsuarc/sda_autogen",
     author="NC State Aerial Robotics Club",
     author_email="contact@aerialroboticsclub.com",
-    packages=["autogen"],
+    packages=["suas_path_planning"],
     package_dir={"suas_path_planning": "autogen"},
     install_requires=[
-        # NetworkX Library
         "networkx",
-        # Shapely Library
         "Shapely",
-        # PyGeodesy Library
         "PyGeodesy",
     ],
 )

@@ -2,7 +2,7 @@ import argparse
 import json
 import time
 
-from autogen import suas_graph
+from suas_path_planning import SUASGraph
 
 
 def upload_json(graph, json_file):
@@ -33,7 +33,7 @@ def construct_graph(interop_data, drop, off_axis, obstacles):
         SUASGraph: The constructed graph
     """
     # Initial graph constructor
-    g = suas_graph.SUASGraph(
+    g = SUASGraph(
         interop_data["lostCommsPos"],
         (
             int(interop_data["flyZones"][0]["altitudeMin"]),
