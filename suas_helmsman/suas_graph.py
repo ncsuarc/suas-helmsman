@@ -1,12 +1,11 @@
 import itertools
 from math import pi, sqrt, tan
 from typing import List, Optional, Tuple
-import matplotlib.pyplot as plt
 import networkx as nx
 from pygeodesy.ecef import EcefCartesian
 from shapely.geometry import LinearRing, LineString, Point, Polygon
 
-from autogen.data import Obstacle, Waypoint
+from suas_helmsman.data import Obstacle, Waypoint
 
 
 class SUASGraph:
@@ -292,10 +291,6 @@ class SUASGraph:
             _, _, _, lat, lon, *_ = self.cartesian.reverse(x, y, 0)
             temp.append((lat, lon, z))
         return temp
-
-    def show(self) -> None:
-        nx.draw_networkx(self.graph, with_labels=False, node_size=100)
-        plt.show()
 
 
 def heuristic(node, end_node) -> float:
