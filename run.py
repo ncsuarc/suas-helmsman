@@ -80,12 +80,6 @@ if __name__ == "__main__":
         default="./test-files/suas_2019_missions.json",
     )
     parser.add_argument(
-        "-i",
-        "--ip",
-        help="IP of the pixhawk to transmit data to",
-        default="localhost:14550",
-    )
-    parser.add_argument(
         "-d",
         "--drop",
         help="Toggle to generate drop point",
