@@ -69,7 +69,7 @@ if __name__ == "__main__":
     """Main function for the program.
 
     Example:
-        python3 run.py -f ~/file/path.json -i 192.168.1.51 -o=False -d=False
+        python3 run.py -f ~/file/path.json -o -d
     """
     # Add command line arguments
     parser = argparse.ArgumentParser()
