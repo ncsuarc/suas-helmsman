@@ -1,5 +1,5 @@
 from pygeodesy.ecef import EcefCartesian
-from autogen.data import feet_to_meters
+from suas_helmsman.data import feet_to_meters
 import json
 import argparse
 from vpython import *

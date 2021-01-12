@@ -2,7 +2,7 @@ import argparse
 import json
 import time
 
-from suas_path_planning import SUASGraph
+from suas_helmsman import SUASGraph
 
 
 def upload_json(graph, json_file):
